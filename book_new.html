@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3d1830">
+<title>Book an appointment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --ink:#1d0e18; --plum:#3d1830; --mul:#8a3a62; --gold:#d9bd8f; --gold-d:#a5814d;
+    --bg:#f5f1f3; --line:#e6dde3; --mut:#7d6b75; --ok:#23855a; --err:#b73a3a;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Jost',system-ui,sans-serif;font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;cursor:pointer}
+  [hidden]{display:none!important}
+  :focus-visible{outline:2px solid var(--gold-d);outline-offset:2px}
+
+  /* ---------- hero ---------- */
+  .hero{background:linear-gradient(165deg,#120810 0%,var(--plum) 68%,#57244a 100%);color:#f3e9ee;padding:calc(env(safe-area-inset-top,0px) + 36px) 24px 56px}
+  .hero .kicker{color:var(--gold);font-size:.95rem}
+  .hero h1{font-weight:300;font-size:clamp(2.5rem,10vw,3.5rem);line-height:1.02;letter-spacing:-.01em;margin:8px 0 12px;word-break:break-word}
+  .hero .tag{margin:0;color:#cdbcc6;max-width:34ch;font-weight:300;font-size:1.05rem}
+  .next{margin-top:24px;display:inline-flex;align-items:center;gap:10px;background:rgba(217,189,143,.13);border:1px solid rgba(217,189,143,.5);color:#f8ecd8;border-radius:999px;padding:11px 18px 11px 14px;font-weight:400}
+  .next .dot{width:8px;height:8px;border-radius:50%;background:#7be3a8;box-shadow:0 0 0 4px rgba(123,227,168,.2)}
+  .info{margin-top:20px;display:flex;flex-direction:column;gap:4px;color:#cdbcc6;font-size:.95rem;font-weight:300}
+  .info a{color:inherit}
+  .powered{margin-top:26px;font-size:.8rem;color:#8f7a86;font-weight:300}
+
+  /* ---------- sheet ---------- */
+  .sheet{background:#fff;border-radius:28px 28px 0 0;margin-top:-26px;position:relative;padding:6px 20px 160px;min-height:60vh}
+  .sec{padding:24px 0;border-bottom:1px solid var(--line)}
+  .sec:last-child{border-bottom:0}
+  .sec h2{display:flex;align-items:baseline;gap:12px;margin:0 0 16px;font-size:1.2rem;font-weight:500}
+  .sec h2 i{font-style:normal;font-weight:300;font-size:1.7rem;line-height:1;color:var(--gold-d);min-width:1.1ch}
+
+  .svc-list{display:grid;gap:8px}
+  .svc{display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:14px;width:100%;text-align:left;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;transition:background .15s,border-color .15s,color .15s}
+  .svc .ico{width:46px;height:46px;border-radius:12px;background:var(--bg);color:var(--plum);display:grid;place-items:center}
+  .svc b{display:block;font-weight:500;font-size:1.05rem}
+  .svc small{color:var(--mut);font-size:.88rem}
+  .svc .pr{font-weight:500;font-size:1.02rem}
+  .svc.sel{background:var(--plum);border-color:var(--plum);color:#fff}
+  .svc.sel .ico{background:rgba(217,189,143,.16);color:var(--gold)}
+  .svc.sel small{color:#d7c6cf}
+
+  .days{display:flex;gap:8px;overflow-x:auto;margin:0 -20px;padding:2px 20px 8px;scroll-snap-type:x proximity;scrollbar-width:none}
+  .days::-webkit-scrollbar{display:none}
+  .day{flex:0 0 auto;width:64px;padding:10px 0;border:1px solid var(--line);border-radius:18px;background:#fff;text-align:center;scroll-snap-align:start;display:flex;flex-direction:column;gap:1px;transition:background .15s}
+  .day span{font-size:.78rem;color:var(--mut)}
+  .day b{font-size:1.45rem;font-weight:400;line-height:1.15}
+  .day.sel{background:var(--plum);border-color:var(--plum);color:#fff}
+  .day.sel span{color:var(--gold)}
+
+  .grp{margin-bottom:16px}
+  .grp-l{font-size:.88rem;color:var(--mut);margin-bottom:8px}
+  .slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .slot{padding:13px 0;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:.98rem;transition:background .15s}
+  .slot:disabled{color:#b9aab3;background:#faf7f9;text-decoration:line-through;cursor:not-allowed}
+  .slot.sel{background:var(--plum);color:#fff;border-color:var(--plum)}
+  .none{color:var(--mut);font-size:.95rem;margin:0 0 14px}
+
+  .field{display:block;margin-bottom:14px}
+  .field>span{display:block;font-size:.88rem;color:var(--mut);margin-bottom:6px}
+  .field input{width:100%;padding:14px;border:1px solid var(--line);border-radius:12px;font:inherit;font-size:16px;background:#fff;color:var(--ink)}
+  .field input:focus{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold-d)}
+  .phone{display:flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}
+  .phone:focus-within{outline:2px solid var(--gold);outline-offset:1px;border-color:var(--gold-d)}
+  .phone em{padding:14px 12px;background:var(--bg);font-style:normal;color:var(--mut)}
+  .phone input{border:0;border-radius:0;flex:1;min-width:0}
+  .phone input:focus{outline:0}
+  .hint{color:var(--err);font-size:.88rem;min-height:1.2em}
+  .msg{padding:36px 8px;text-align:center;color:var(--mut);font-size:1.02rem}
+  .err{color:var(--err)}
+
+  /* ---------- skeleton ---------- */
+  .sk{background:linear-gradient(90deg,#efe8ec 25%,#f8f4f6 50%,#efe8ec 75%);background-size:200% 100%;animation:sh 1.3s infinite;border-radius:12px}
+  @keyframes sh{to{background-position:-200% 0}}
+
+  /* ---------- bottom bar ---------- */
+  .bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px))}
+  .bar-in{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:14px}
+  .sum{flex:1;min-width:0}
+  .sum b{display:block;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sum span{font-size:.88rem;color:var(--mut)}
+  .go{border:0;border-radius:14px;background:#d9cfd5;color:#7d6b75;padding:14px 22px;font-weight:500;font-size:1rem;white-space:nowrap;cursor:not-allowed}
+  .go.ready{background:var(--ink);color:#fff;cursor:pointer;box-shadow:0 10px 22px -10px rgba(29,14,24,.7)}
+
+  /* ---------- confirmation ---------- */
+  .done{position:fixed;inset:0;z-index:10;overflow:auto;background:linear-gradient(165deg,#120810,var(--plum) 72%,#57244a);color:#f3e9ee;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center}
+  .ring{width:88px;height:88px;border-radius:50%;border:1.5px solid var(--gold);display:grid;place-items:center;margin-bottom:22px}
+  .ring path{stroke:var(--gold);stroke-dasharray:36;stroke-dashoffset:36;animation:draw .7s .25s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  .done h2{font-weight:300;font-size:2.4rem;margin:0 0 6px}
+  .done .sub{margin:0;color:#cdbcc6;font-weight:300;max-width:32ch}
+  .ticket{margin:24px 0 22px;width:100%;max-width:360px;border:1px solid rgba(217,189,143,.4);border-radius:18px;padding:6px 18px;text-align:left}
+  .ticket div{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1)}
+  .ticket div:last-child{border-bottom:0}
+  .ticket span{color:#b8a6b0}
+  .ticket b{font-weight:500;text-align:right}
+  .b-gold,.b-ghost{width:100%;max-width:360px;border-radius:14px;padding:15px;font-weight:500;font-size:1rem;margin-top:10px}
+  .b-gold{border:0;background:var(--gold);color:var(--ink)}
+  .b-ghost{background:transparent;border:1px solid rgba(255,255,255,.3);color:#f3e9ee}
+
+  /* ---------- desktop ---------- */
+  @media(min-width:960px){
+    .shell{display:grid;grid-template-columns:minmax(380px,42%) 1fr}
+    .hero{position:sticky;top:0;height:100vh;padding:80px 56px 48px;display:flex;flex-direction:column}
+    .hero h1{font-size:4.2rem}
+    .powered{margin-top:auto}
+    .sheet{border-radius:0;margin:0;padding:64px 56px 160px;max-width:760px}
+    .bar{left:min(42%,100%)}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.ring path{stroke-dashoffset:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="hero">
+    <div class="kicker">Book online</div>
+    <h1 id="salonName">&nbsp;</h1>
+    <p class="tag" id="tagline"></p>
+    <div id="nextWrap"></div>
+    <div class="info" id="info"></div>
+    <div class="powered">Powered by Bookline</div>
+  </header>
+  <main class="sheet" id="panel">
+    <div class="sk" style="height:22px;width:46%;margin:26px 0 16px"></div>
+    <div class="sk" style="height:66px;margin-bottom:8px"></div>
+    <div class="sk" style="height:66px;margin-bottom:8px"></div>
+    <div class="sk" style="height:66px"></div>
+  </main>
+</div>
+
+<div class="bar" id="bar" hidden>
+  <div class="bar-in">
+    <div class="sum"><b id="sumTop">Your appointment</b><span id="sumSub">Choose a service to begin</span></div>
+    <button class="go" id="goBtn" disabled>Choose a service</button>
+  </div>
+</div>
+
+<div class="done" id="done" hidden>
+  <div class="ring"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+  <h2>You’re booked</h2>
+  <p class="sub" id="doneSub"></p>
+  <div class="ticket" id="ticket"></div>
+  <button class="b-gold" id="calBtn">Add to calendar</button>
+  <button class="b-ghost" id="againBtn">Book another appointment</button>
+</div>
+
+<script>
+/* ============ Firebase config (from your Firebase console) ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDvv_BQGPWCjTyrBpOvtZZyNkFg1a9ugCo",
+  authDomain: "bookline-280c4.firebaseapp.com",
+  projectId: "bookline-280c4",
+  storageBucket: "bookline-280c4.firebasestorage.app",
+  messagingSenderId: "1066747513253",
+  appId: "1:1066747513253:web:d0c7f3c79fc0b576dac04c"
+};
+/* ====================================================================== */
+
+if (typeof firebase === 'undefined' || firebaseConfig.apiKey === 'YOUR_API_KEY') {
+  document.getElementById('panel').innerHTML =
+    '<p class="msg">Setup not finished. Add your Firebase config and open this page from your hosted link.</p>';
+  throw new Error('Setup incomplete');
+}
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const salonId = new URLSearchParams(location.search).get('salon');
+
+/* Time slots. Keep identical in owner.html. */
+const SLOT_GROUPS = [
+  {label:'Morning',   times:["10:00 AM","11:00 AM","12:00 PM"]},
+  {label:'Afternoon', times:["1:30 PM","3:00 PM","4:00 PM"]},
+  {label:'Evening',   times:["5:00 PM","6:00 PM","7:00 PM"]}
+];
+const ALL_TIMES = SLOT_GROUPS.flatMap(g => g.times);
+
+/* Default services. A salon can override these by adding a "services" array
+   (maps with name, duration in minutes, price) to its document in Firestore. */
+let SERVICES = [
+  {name:'Haircut',      duration:45, price:400},
+  {name:'Hair color',   duration:90, price:1500},
+  {name:'Facial',       duration:60, price:800},
+  {name:'Consultation', duration:15, price:0}
+];
+
+const ICONS = {
+  scissors:'<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12"/>',
+  drop:'<path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/>',
+  spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z"/>',
+  chat:'<path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.5 8.5 0 0 1-3.8-.9L3 21l2-5.2A8.4 8.4 0 1 1 21 11.5z"/>'
+};
+function iconFor(s){
+  const n = (s.name || '').toLowerCase();
+  let k = 'spark';
+  if (/hair ?cut|trim|shave|beard/.test(n)) k = 'scissors';
+  else if (/colou?r|dye|highlight/.test(n)) k = 'drop';
+  else if (/consult|advice/.test(n)) k = 'chat';
+  return '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">' + ICONS[k] + '</svg>';
+}
+
+/* ---------- date helpers ---------- */
+const pad = n => String(n).padStart(2,'0');
+const isoOf = d => d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+const todayISO = () => isoOf(new Date());
+function tomorrowISO(){ const d = new Date(); d.setDate(d.getDate()+1); return isoOf(d); }
+function parseISO(iso){ const [y,m,d] = iso.split('-').map(Number); return new Date(y, m-1, d); }
+function dayLabel(iso){
+  if (iso === todayISO()) return 'Today';
+  if (iso === tomorrowISO()) return 'Tomorrow';
+  return parseISO(iso).toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short'});
+}
+function toMin(t){
+  const m = /(\d+):(\d+)\s*(AM|PM)/i.exec(t);
+  let h = Number(m[1]) % 12;
+  if (m[3].toUpperCase() === 'PM') h += 12;
+  return h * 60 + Number(m[2]);
+}
+function nowMin(){ const n = new Date(); return n.getHours() * 60 + n.getMinutes(); }
+const DAYS = Array.from({length:14}, (_, i) => { const d = new Date(); d.setDate(d.getDate()+i); return d; });
+
+/* ---------- state ---------- */
+let salonRef = null, salon = null, unsub = null, busy = false, lastBooking = null;
+const state = { service:null, date:todayISO(), time:null, taken:new Set(), loading:true, ready:false };
+
+function fatal(msg){
+  $('panel').innerHTML = '<p class="msg">' + esc(msg) + '</p>';
+  $('bar').hidden = true;
+}
+
+if (!salonId) fatal('This link is missing its salon. Ask the salon for their booking link.');
+else init();
+
+async function init(){
+  salonRef = db.collection('salons').doc(salonId);
+  let data;
+  try{
+    const doc = await salonRef.get();
+    if (!doc.exists) return fatal('This booking link isn’t active. Check the link with the salon.');
+    data = doc.data();
+  }catch(e){
+    return fatal('Couldn’t load this page. Check your connection and refresh.');
+  }
+  salon = data;
+  const name = data.name || 'Book an appointment';
+  $('salonName').textContent = name;
+  document.title = name + ' – Book online';
+  $('tagline').textContent = data.tagline || 'Choose a service and a time. Booking takes under a minute.';
+
+  const info = [];
+  if (data.address) info.push('<span>' + esc(data.address) + '</span>');
+  if (data.phone) info.push('<a href="tel:' + esc(String(data.phone).replace(/[^\d+]/g,'')) + '">' + esc(data.phone) + '</a>');
+  $('info').innerHTML = info.join('');
+
+  if (Array.isArray(data.services) && data.services.length){
+    const custom = data.services.filter(s => s && s.name).map(s => ({
+      name: String(s.name).slice(0,60),
+      duration: Number(s.duration) || 0,
+      price: (s.price === undefined || s.price === null) ? null : Number(s.price)
+    }));
+    if (custom.length) SERVICES = custom;
+  }
+
+  renderPanel();
+  $('bar').hidden = false;
+  watchSlots();
+  loadNext();
+}
+
+function renderPanel(){
+  $('panel').innerHTML =
+    '<section class="sec"><h2><i>1</i>Choose a service</h2><div class="svc-list" id="svcList"></div></section>' +
+    '<section class="sec"><h2><i>2</i>Pick a day</h2><div class="days" id="days"></div></section>' +
+    '<section class="sec"><h2><i>3</i>Pick a time</h2><div id="slotArea"></div></section>' +
+    '<section class="sec"><h2><i>4</i>Your details</h2>' +
+      '<label class="field"><span>Name</span><input id="custName" autocomplete="name" placeholder="Your full name" maxlength="60"></label>' +
+      '<label class="field"><span>WhatsApp number</span><div class="phone"><em>+91</em><input id="custPhone" inputmode="numeric" autocomplete="tel-national" placeholder="10-digit mobile number" maxlength="14"></div></label>' +
+      '<div class="hint" id="phoneHint"></div>' +
+    '</section>';
+  renderServices();
+  renderDates();
+
+  const panel = $('panel');
+  panel.addEventListener('click', e => {
+    const s = e.target.closest('.svc');
+    if (s){ state.service = Number(s.dataset.i); renderServices(); updateBar(); return; }
+    const d = e.target.closest('.day');
+    if (d){ state.date = d.dataset.d; state.time = null; renderDates(); watchSlots(); return; }
+    const t = e.target.closest('.slot');
+    if (t && !t.disabled){ state.time = t.dataset.t; renderSlots(); }
+  });
+  panel.addEventListener('input', updateBar);
+  $('goBtn').addEventListener('click', submit);
+}
+
+function renderServices(){
+  $('svcList').innerHTML = SERVICES.map((s, i) => {
+    const meta = s.duration ? s.duration + ' min' : '';
+    let price = '';
+    if (s.price === 0) price = 'Free';
+    else if (s.price) price = '₹' + s.price.toLocaleString('en-IN');
+    return '<button class="svc' + (state.service === i ? ' sel' : '') + '" data-i="' + i + '">' +
+      '<span class="ico">' + iconFor(s) + '</span>' +
+      '<span><b>' + esc(s.name) + '</b>' + (meta ? '<small>' + meta + '</small>' : '') + '</span>' +
+      '<span class="pr">' + price + '</span></button>';
+  }).join('');
+}
+
+function renderDates(){
+  $('days').innerHTML = DAYS.map((d, i) => {
+    const iso = isoOf(d);
+    return '<button class="day' + (state.date === iso ? ' sel' : '') + '" data-d="' + iso + '">' +
+      '<span>' + (i === 0 ? 'Today' : d.toLocaleDateString('en-IN', {weekday:'short'})) + '</span>' +
+      '<b>' + d.getDate() + '</b>' +
+      '<span>' + d.toLocaleDateString('en-IN', {month:'short'}) + '</span></button>';
+  }).join('');
+  const sel = document.querySelector('.day.sel');
+  if (sel && sel.scrollIntoView) sel.scrollIntoView({inline:'center', block:'nearest'});
+}
+
+function slotDisabled(t){
+  return state.taken.has(t) || (state.date === todayISO() && toMin(t) <= nowMin());
+}
+
+function watchSlots(){
+  if (unsub) unsub();
+  state.loading = true;
+  renderSlots();
+  unsub = salonRef.collection('slots').where('date','==',state.date).onSnapshot(snap => {
+    state.taken = new Set(snap.docs.map(d => d.data().time));
+    state.loading = false;
+    renderSlots();
+  }, () => {
+    $('slotArea').innerHTML = '<p class="msg err">Couldn’t load times. Refresh the page and try again.</p>';
+  });
+}
+
+function renderSlots(){
+  const area = $('slotArea');
+  if (!area) return;
+  if (state.loading){
+    area.innerHTML = '<div class="sk" style="height:150px"></div>';
+    updateBar();
+    return;
+  }
+  if (state.time && slotDisabled(state.time)) state.time = null;
+  const free = ALL_TIMES.filter(t => !slotDisabled(t)).length;
+  area.innerHTML = (free === 0 ? '<p class="none">Fully booked for this day. Pick another day.</p>' : '') +
+    SLOT_GROUPS.map(g =>
+      '<div class="grp"><div class="grp-l">' + g.label + '</div><div class="slots">' +
+      g.times.map(t => '<button class="slot' + (state.time === t ? ' sel' : '') + '" data-t="' + t + '"' + (slotDisabled(t) ? ' disabled' : '') + '>' + t + '</button>').join('') +
+      '</div></div>'
+    ).join('');
+  updateBar();
+}
+
+function details(){
+  const name = $('custName').value.replace(/\s+/g,' ').trim();
+  const phone = $('custPhone').value.replace(/\D/g,'').slice(-10);
+  return { name, phone, ok: name.length >= 2 && /^[6-9]\d{9}$/.test(phone) };
+}
+
+function updateBar(){
+  if (!$('custName')) return;
+  const det = details();
+  const s = state.service === null ? null : SERVICES[state.service];
+  const rawDigits = $('custPhone').value.replace(/\D/g,'');
+  $('phoneHint').textContent = (rawDigits.length >= 10 && !/^[6-9]\d{9}$/.test(rawDigits.slice(-10))) ? 'Enter a valid 10-digit mobile number.' : '';
+
+  let label, ready = false;
+  if (!s) label = 'Choose a service';
+  else if (!state.time) label = 'Pick a time';
+  else if (!det.ok) label = 'Enter your details';
+  else { label = 'Confirm booking'; ready = true; }
+
+  state.ready = ready;
+  $('sumTop').textContent = s ? s.name : 'Your appointment';
+  $('sumSub').textContent = s || state.time ? dayLabel(state.date) + (state.time ? ' at ' + state.time : '') : 'Choose a service to begin';
+  const btn = $('goBtn');
+  btn.textContent = busy ? 'Booking…' : label;
+  btn.disabled = !ready || busy;
+  btn.classList.toggle('ready', ready && !busy);
+}
+
+/* "Next available" shortcut in the hero */
+async function loadNext(){
+  try{
+    const t = todayISO(), tm = tomorrowISO();
+    const snap = await salonRef.collection('slots').where('date','in',[t, tm]).get();
+    const taken = {};
+    snap.forEach(d => { const x = d.data(); taken[x.date + '|' + x.time] = true; });
+    for (const iso of [t, tm]){
+      for (const time of ALL_TIMES){
+        if (taken[iso + '|' + time]) continue;
+        if (iso === t && toMin(time) <= nowMin()) continue;
+        $('nextWrap').innerHTML = '<button class="next" id="nextBtn"><span class="dot"></span>Next available: ' + dayLabel(iso) + ' at ' + time + '</button>';
+        $('nextBtn').addEventListener('click', () => {
+          state.date = iso; state.time = time;
+          renderDates(); watchSlots();
+          $('panel').scrollIntoView({behavior:'smooth', block:'start'});
+        });
+        return;
+      }
+    }
+  }catch(e){ /* the shortcut is optional */ }
+}
+
+async function submit(){
+  if (!state.ready || busy) return;
+  const det = details();
+  const s = SERVICES[state.service];
+  const date = state.date, time = state.time;
+  busy = true; updateBar();
+  try{
+    // The slot id is unique per date and time, so a second person can't take it:
+    // that write is rejected and the whole batch fails.
+    const slotId = date + '_' + time.replace(/[^0-9A-Za-z]/g,'');
+    const batch = db.batch();
+    batch.set(salonRef.collection('slots').doc(slotId), { date, time });
+    batch.set(salonRef.collection('appointments').doc(), {
+      name: det.name, phone: det.phone, service: s.name.slice(0,60), date, time, slotId,
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    await batch.commit();
+    lastBooking = { name:det.name, service:s, date, time };
+    showDone();
+  }catch(e){
+    state.time = null;
+    $('phoneHint').textContent = 'That time was just taken or couldn’t be saved. Please pick another time.';
+    watchSlots();
+  }
+  busy = false; updateBar();
+}
+
+function showDone(){
+  const b = lastBooking;
+  $('doneSub').textContent = 'Thanks ' + b.name.split(' ')[0] + '. The salon will send you a WhatsApp reminder before your slot.';
+  $('ticket').innerHTML =
+    '<div><span>Service</span><b>' + esc(b.service.name) + '</b></div>' +
+    '<div><span>Day</span><b>' + esc(dayLabel(b.date)) + '</b></div>' +
+    '<div><span>Time</span><b>' + esc(b.time) + '</b></div>' +
+    '<div><span>At</span><b>' + esc(salon.name || 'the salon') + '</b></div>';
+  $('bar').hidden = true;
+  $('done').hidden = false;
+}
+
+$('againBtn').addEventListener('click', () => location.reload());
+$('calBtn').addEventListener('click', () => {
+  const b = lastBooking; if (!b) return;
+  const [y, m, d] = b.date.split('-').map(Number);
+  const mins = toMin(b.time);
+  const start = new Date(y, m-1, d, Math.floor(mins/60), mins % 60);
+  const end = new Date(start.getTime() + (b.service.duration || 60) * 60000);
+  const f = dt => dt.getFullYear() + pad(dt.getMonth()+1) + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + pad(dt.getMinutes()) + '00';
+  const clean = x => String(x).replace(/[,;\n]/g,' ');
+  const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Bookline//EN','BEGIN:VEVENT',
+    'UID:' + Date.now() + '@bookline',
+    'DTSTAMP:' + f(new Date()),
+    'DTSTART:' + f(start), 'DTEND:' + f(end),
+    'SUMMARY:' + clean(b.service.name + ' at ' + (salon.name || 'salon')),
+    salon.address ? 'LOCATION:' + clean(salon.address) : '',
+    'END:VEVENT','END:VCALENDAR'].filter(Boolean).join('\r\n');
+  const url = URL.createObjectURL(new Blob([ics], {type:'text/calendar'}));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'appointment.ics';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+});
+</script>
+</body>
+</html>
