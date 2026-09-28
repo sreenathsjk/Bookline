@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bookline — Owner dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+  :root{ --plum:#3B1F2B; --blush:#EBD4CF; --gold:#B8925A; --cream:#FBF7F2; --ink:#241419; --line:#E4D7CE; }
+  *{box-sizing:border-box;} html,body{height:100%;}
+  body{margin:0;background:var(--cream);color:var(--ink);font-family:'Inter',system-ui,sans-serif;}
+  h1{font-family:'Fraunces',Georgia,serif;font-weight:600;margin:0;}
+  .wrap{max-width:480px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;}
+  header{padding:22px 20px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:baseline;}
+  header h1{font-size:1.5rem;color:var(--plum);}
+  header button{background:none;border:none;font-size:.8rem;opacity:.6;cursor:pointer;text-decoration:underline;}
+  main{flex:1;padding:20px;}
+  label{display:block;font-size:.78rem;font-weight:600;opacity:.6;margin:16px 0 6px;}
+  label:first-child{margin-top:0;}
+  input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--cream);color:var(--ink);font-size:.95rem;}
+  .btn{width:100%;margin-top:22px;padding:14px;border:none;border-radius:10px;background:var(--plum);color:var(--blush);font-weight:600;cursor:pointer;}
+  .stats{display:flex;gap:8px;margin-bottom:16px;}
+  .stat{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 8px;text-align:center;}
+  .stat b{display:block;font-family:'Fraunces',serif;font-size:1.3rem;color:var(--plum);}
+  .stat span{font-size:.7rem;opacity:.6;}
+  .toolbar{display:flex;justify-content:flex-end;margin-bottom:10px;}
+  .toolbar button{padding:8px 14px;border-radius:8px;border:1px solid var(--line);background:transparent;font-size:.8rem;font-weight:600;cursor:pointer;}
+  .card{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+  .card .row{display:flex;justify-content:space-between;align-items:baseline;}
+  .card .name{font-weight:600;}
+  .card .time{font-size:.85rem;color:var(--gold);font-weight:600;}
+  .card .meta{font-size:.8rem;opacity:.6;margin-top:2px;}
+  .card .actions{display:flex;gap:8px;margin-top:10px;}
+  .card .actions a,.card .actions button{flex:1;text-align:center;padding:8px 0;border-radius:8px;font-size:.8rem;font-weight:600;text-decoration:none;border:1px solid var(--line);color:var(--ink);background:transparent;cursor:pointer;}
+  .card .actions a.wa{background:#25D36622;border-color:#25D36655;}
+  .card .actions button.active{background:var(--plum);color:var(--blush);border-color:var(--plum);}
+  .badge{display:inline-block;font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:20px;margin-left:8px;}
+  .badge.pending{background:#B8925A33;color:var(--gold);}
+  .badge.reminded{background:#25D36633;color:#1b8f4c;}
+  .badge.noshow{background:#D9575733;color:#c0392b;}
+  .empty{text-align:center;padding:40px 10px;opacity:.55;font-size:.9rem;}
+  .hint{font-size:.78rem;opacity:.55;margin-top:8px;line-height:1.5;}
+  .error{color:#c0392b;font-size:.85rem;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="salonName">Bookline</h1>
+    <button id="logoutBtn" style="display:none">Log out</button>
+  </header>
+  <main id="mainArea"><p class="hint">Loading…</p></main>
+</div>
+
+<script>
+/* ============ FILL THIS IN — same config as book.html ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyDvv_BQGPWCjTyrBpOvtZZyNkFg1a9ugCo",
+  authDomain: "bookline-280c4.firebaseapp.com",
+  projectId: "bookline-280c4",
+  storageBucket: "bookline-280c4.firebasestorage.app",
+  messagingSenderId: "1066747513253",
+  appId: "1:1066747513253:web:d0c7f3c79fc0b576dac04c"
+};
+/* =================================================================== */
+
+if (typeof firebase === 'undefined' || firebaseConfig.apiKey === 'YOUR_API_KEY') {
+  document.getElementById('mainArea').innerHTML =
+    '<p class="error">Setup not finished. (1) Paste your real Firebase config into this file, and (2) open this page from your hosted link (e.g. GitHub Pages), not from a preview inside another app.</p>';
+  throw new Error('Setup incomplete');
+}
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+
+const SLOT_TIMES = ["10:00 AM","11:00 AM","12:00 PM","1:30 PM","3:00 PM","4:00 PM","5:00 PM","6:00 PM","7:00 PM"];
+const badgeLabel = {pending:'Not reminded', reminded:'Reminded', noshow:'No-show'};
+const params = new URLSearchParams(location.search);
+const salonId = params.get('salon');
+const main = document.getElementById('mainArea');
+
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function formatDateLabel(iso){
+  const [y,m,d]=iso.split('-').map(Number); const date=new Date(y,m-1,d);
+  const tmr=new Date(); tmr.setDate(tmr.getDate()+1);
+  const tmrStr=tmr.getFullYear()+'-'+String(tmr.getMonth()+1).padStart(2,'0')+'-'+String(tmr.getDate()).padStart(2,'0');
+  if(iso===todayISO()) return 'Today';
+  if(iso===tmrStr) return 'Tomorrow';
+  return date.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+}
+
+if(!salonId){
+  main.innerHTML = '<p class="error">No salon specified. This link is missing its ?salon= id.</p>';
+} else {
+  showLogin();
+  auth.onAuthStateChanged(user=>{
+    if(user){ checkAccessAndRender(user); }
+    else { document.getElementById('logoutBtn').style.display='none'; showLogin(); }
+  });
+}
+
+function showLogin(){
+  main.innerHTML = `
+    <label>Email</label><input id="loginEmail" type="email">
+    <label>Password</label><input id="loginPass" type="password">
+    <button class="btn" id="loginBtn">Log in</button>
+    <div id="loginError"></div>`;
+  document.getElementById('loginBtn').onclick = ()=>{
+    const email = document.getElementById('loginEmail').value.trim();
+    const pass = document.getElementById('loginPass').value;
+    auth.signInWithEmailAndPassword(email, pass).catch(e=>{
+      document.getElementById('loginError').innerHTML = '<p class="error">Login failed — check your email and password.</p>';
+    });
+  };
+}
+
+let unsubList = null;
+async function checkAccessAndRender(user){
+  document.getElementById('logoutBtn').style.display = 'inline';
+  document.getElementById('logoutBtn').onclick = ()=>{ if(unsubList) unsubList(); auth.signOut(); };
+
+  const salonDoc = await db.collection('salons').doc(salonId).get();
+  if(!salonDoc.exists){
+    main.innerHTML = '<p class="error">This salon isn\'t set up yet.</p>';
+    return;
+  }
+  const salon = salonDoc.data();
+  document.getElementById('salonName').textContent = salon.name || 'Bookline';
+  if(salon.ownerUid !== user.uid){
+    main.innerHTML = '<p class="error">This login isn\'t linked to this salon\'s dashboard.</p>';
+    return;
+  }
+  renderDashboard();
+}
+
+function renderDashboard(){
+  main.innerHTML = `
+    <div class="stats" id="statsBar"></div>
+    <div class="toolbar"><button id="exportBtn">Export list (PDF)</button></div>
+    <div id="ownerList"><p class="hint">Loading bookings…</p></div>
+    <p class="hint">Tap "Remind" to open a pre-filled WhatsApp message. Mark Reminded or No-show to track it.</p>`;
+
+  if(unsubList) unsubList();
+  unsubList = db.collection('salons').doc(salonId).collection('appointments')
+    .onSnapshot(snap=>{
+      const appts = snap.docs.map(d=>({id:d.id, ...d.data()})).sort((a,b)=>{
+        if(a.date!==b.date) return a.date<b.date ? -1 : 1;
+        return SLOT_TIMES.indexOf(a.time) - SLOT_TIMES.indexOf(b.time);
+      });
+      renderList(appts);
+    }, ()=>{ document.getElementById('ownerList').innerHTML = '<p class="error">Couldn\'t load bookings.</p>'; });
+
+  document.getElementById('exportBtn').onclick = ()=> exportPdf();
+}
+
+let currentAppts = [];
+function renderList(appts){
+  currentAppts = appts;
+  const remindedCount = appts.filter(a=>a.status==='reminded').length;
+  const noshowCount = appts.filter(a=>a.status==='noshow').length;
+  document.getElementById('statsBar').innerHTML = `
+    <div class="stat"><b>${appts.length}</b><span>Bookings</span></div>
+    <div class="stat"><b>${remindedCount}</b><span>Reminded</span></div>
+    <div class="stat"><b>${noshowCount}</b><span>No-shows</span></div>`;
+
+  const list = document.getElementById('ownerList');
+  if(appts.length===0){ list.innerHTML = '<div class="empty">No bookings yet.</div>'; return; }
+
+  list.innerHTML = appts.map(a=>{
+    const dateLabel = formatDateLabel(a.date||todayISO());
+    const msg = encodeURIComponent(`Hi ${a.name}, this is a reminder from ${document.getElementById('salonName').textContent} — your ${a.service} appointment is ${dateLabel} at ${a.time}. Reply YES to confirm or let us know if you need to reschedule.`);
+    const wa = `https://wa.me/91${String(a.phone).replace(/\D/g,'')}?text=${msg}`;
+    const status = a.status || 'pending';
+    return `<div class="card">
+      <div class="row"><span class="name">${a.name}<span class="badge ${status}">${badgeLabel[status]}</span></span><span class="time">${a.time}</span></div>
+      <div class="meta">${dateLabel} · ${a.service} · ${a.phone}</div>
+      <div class="actions">
+        <a class="wa" href="${wa}" target="_blank" rel="noopener" onclick="markStatus('${a.id}','reminded')">Remind</a>
+        <button class="${status==='noshow'?'active':''}" onclick="markStatus('${a.id}','noshow')">No-show</button>
+        <button onclick="removeAppt('${a.id}')">Cancel</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function markStatus(id, status){
+  const a = currentAppts.find(x=>x.id===id);
+  const next = (a && a.status===status) ? 'pending' : status;
+  db.collection('salons').doc(salonId).collection('appointments').doc(id).update({status: next});
+}
+window.markStatus = markStatus;
+
+function removeAppt(id){
+  const a = currentAppts.find(x=>x.id===id);
+  const salonRef = db.collection('salons').doc(salonId);
+  const batch = db.batch();
+  batch.delete(salonRef.collection('appointments').doc(id));
+  if(a && a.slotId) batch.delete(salonRef.collection('slots').doc(a.slotId)); // frees the slot again
+  batch.commit();
+}
+window.removeAppt = removeAppt;
+
+function exportPdf(){
+  if(currentAppts.length===0){ alert('No bookings to export yet.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  const marginX = 14; let y = 20;
+  const shopName = document.getElementById('salonName').textContent;
+
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.text(shopName, marginX, y); y+=6;
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(120);
+  doc.text('Appointment list — exported ' + new Date().toLocaleDateString(), marginX, y); y+=10;
+  doc.setTextColor(0);
+
+  const colX = {name:marginX, date:62, service:96, time:140, status:168};
+  doc.setFont('helvetica','bold'); doc.setFontSize(10);
+  doc.text('Name',colX.name,y); doc.text('Date',colX.date,y); doc.text('Service',colX.service,y);
+  doc.text('Time',colX.time,y); doc.text('Status',colX.status,y);
+  y+=2; doc.setDrawColor(200); doc.line(marginX,y,196,y); y+=6;
+
+  doc.setFont('helvetica','normal');
+  currentAppts.forEach(a=>{
+    if(y>280){ doc.addPage(); y=20; }
+    doc.text(String(a.name).slice(0,20), colX.name, y);
+    doc.text(formatDateLabel(a.date||todayISO()), colX.date, y);
+    doc.text(String(a.service).slice(0,16), colX.service, y);
+    doc.text(String(a.time), colX.time, y);
+    doc.text(badgeLabel[a.status||'pending'], colX.status, y);
+    y+=8;
+  });
+
+  const remindedCount = currentAppts.filter(a=>a.status==='reminded').length;
+  const noshowCount = currentAppts.filter(a=>a.status==='noshow').length;
+  y+=4; doc.setDrawColor(200); doc.line(marginX,y,196,y); y+=8;
+  doc.setFont('helvetica','bold');
+  doc.text(`${currentAppts.length} total  ·  ${remindedCount} reminded  ·  ${noshowCount} no-shows`, marginX, y);
+  doc.save('appointments.pdf');
+}
+</script>
+</body>
+</html>
