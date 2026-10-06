@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#120f1f">
+<title>BookLine — Booking &amp; Appointments</title>
+<meta name="description" content="BookLine gives salons, clinics and appointment-based businesses their own booking site and owner dashboard — with WhatsApp reminders built in.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#120f1f; --ink2:#1c1730; --violet:#5b3df0; --violet-d:#4529d6; --violet-l:#8b6ff5;
+    --amber:#ffb545; --bg:#faf9fd; --line:#e7e3f3; --mut:#696278; --card:#fff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  h1,h2,h3{font-family:'Sora',system-ui,sans-serif;margin:0;line-height:1.12}
+  a{color:inherit}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 22px}
+  .btn{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:14px 24px;font-weight:600;font-size:.98rem;border:0;cursor:pointer;text-decoration:none}
+  .btn-amber{background:var(--amber);color:#2a1700}
+  .btn-ghost{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.35)}
+  .btn-dark{background:var(--ink);color:#fff}
+  .pill{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#e3defc;border-radius:999px;padding:7px 14px;font-size:.85rem}
+
+  /* ---------- nav ---------- */
+  nav{position:sticky;top:0;z-index:20;background:rgba(18,15,31,.85);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.08)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;color:#fff}
+  .brand{display:flex;flex-direction:column;gap:1px;line-height:1.1}
+  .brand b{font-family:'Sora';font-weight:700;font-size:1.25rem}
+  .brand span{font-size:.72rem;color:#b9b2e6;font-weight:500;letter-spacing:.02em}
+  nav .links{display:none;gap:26px;font-size:.92rem;color:#d9d5f3}
+  @media(min-width:760px){
+    nav .links{display:flex}
+    .brand{flex-direction:row;align-items:baseline;gap:9px}
+  }
+
+  /* ---------- hero ---------- */
+  .hero{background:radial-gradient(1200px 500px at 15% -10%,rgba(91,61,240,.5),transparent),linear-gradient(170deg,#0c0a18,#1c1536 60%,#2a1f4d);color:#fff;padding:64px 0 90px;overflow:hidden;position:relative}
+  .hero .wrap{display:grid;gap:46px}
+  @media(min-width:900px){ .hero .wrap{grid-template-columns:1.05fr .95fr;align-items:center} }
+  .hero h1{font-size:clamp(2.3rem,6vw,3.5rem);font-weight:700;letter-spacing:-.015em}
+  .hero h1 em{font-style:normal;color:var(--amber)}
+  .hero p.lead{color:#cac4ea;font-size:1.12rem;max-width:46ch;margin:18px 0 28px;font-weight:400}
+  .hero .cta{display:flex;flex-wrap:wrap;gap:12px}
+  .hero .trust{margin-top:34px;display:flex;flex-wrap:wrap;gap:10px}
+
+  /* phone mockup */
+  .mock{position:relative;justify-self:center}
+  .phone{width:260px;border-radius:34px;background:#0c0a18;border:6px solid #2a2340;box-shadow:0 40px 80px -30px rgba(0,0,0,.6);padding:14px;position:relative}
+  .phone .screen{background:linear-gradient(170deg,#1c0f2e,#3a1f3d);border-radius:22px;padding:18px 16px;color:#fff;min-height:420px}
+  .phone .tag{font-size:.65rem;color:var(--amber);opacity:.9}
+  .phone .title{font-family:'Sora';font-weight:600;font-size:1.3rem;margin:4px 0 14px}
+  .phone .row{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px;margin-bottom:9px;display:flex;justify-content:space-between;font-size:.82rem}
+  .phone .row b{font-weight:600}
+  .phone .row span{color:#c9c2e8}
+  .phone .chip{display:inline-block;margin-top:14px;background:var(--amber);color:#2a1700;border-radius:8px;padding:7px 10px;font-size:.72rem;font-weight:700}
+  .float{position:absolute;background:#fff;color:var(--ink);border-radius:14px;padding:10px 14px;box-shadow:0 18px 40px -16px rgba(0,0,0,.4);font-size:.78rem;font-weight:600;display:flex;align-items:center;gap:8px}
+  .float.f1{top:-14px;right:-10px}
+  .float.f2{bottom:30px;left:-26px}
+  .dot-ok{width:7px;height:7px;border-radius:50%;background:#2ec07a}
+
+  /* ---------- sections ---------- */
+  section{padding:76px 0}
+  .kicker{color:var(--violet-d);font-weight:600;font-size:.85rem;letter-spacing:.04em;text-transform:uppercase}
+  .h2{font-size:clamp(1.7rem,4vw,2.3rem);margin:8px 0 14px;max-width:22ch}
+  .sub{color:var(--mut);max-width:56ch;font-size:1.02rem}
+
+  .grid3{display:grid;gap:18px;margin-top:38px}
+  @media(min-width:760px){ .grid3{grid-template-columns:repeat(3,1fr)} }
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px}
+  .card .n{width:38px;height:38px;border-radius:10px;background:#f1edfd;color:var(--violet);display:grid;place-items:center;margin-bottom:14px}
+  .card h3{font-size:1.08rem;margin-bottom:6px}
+  .card p{color:var(--mut);font-size:.92rem;margin:0}
+
+  .feat{background:#fff}
+  .feat-grid{display:grid;gap:14px;margin-top:36px}
+  @media(min-width:640px){ .feat-grid{grid-template-columns:repeat(2,1fr)} }
+  .feat-item{display:flex;gap:14px;padding:18px;border:1px solid var(--line);border-radius:16px}
+  .feat-item .n{flex:0 0 auto;width:40px;height:40px;border-radius:11px;background:var(--ink);color:var(--amber);display:grid;place-items:center}
+  .feat-item h3{font-size:1rem;margin-bottom:3px}
+  .feat-item p{margin:0;color:var(--mut);font-size:.9rem}
+
+  .steps{counter-reset:s;display:grid;gap:22px;margin-top:40px}
+  @media(min-width:760px){ .steps{grid-template-columns:repeat(3,1fr)} }
+  .step{position:relative;padding-left:0}
+  .step .num{font-family:'Sora';font-weight:700;font-size:2.4rem;color:var(--line)}
+  .step h3{margin:6px 0 6px;font-size:1.05rem}
+  .step p{color:var(--mut);margin:0;font-size:.92rem}
+
+  .industries{display:grid;gap:16px;margin-top:38px}
+  @media(min-width:760px){ .industries{grid-template-columns:repeat(2,1fr)} }
+  .ind-card{background:var(--ink);color:#fff;border-radius:20px;padding:30px;position:relative;overflow:hidden}
+  .ind-card.alt{background:linear-gradient(160deg,#0f3b42,#156a66)}
+  .ind-card .tag{color:var(--amber);font-size:.78rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase}
+  .ind-card h3{font-size:1.5rem;margin:8px 0 10px}
+  .ind-card p{color:#cfc9ea;font-size:.92rem;max-width:34ch;margin:0 0 18px}
+  .ind-card.alt p{color:#c9e7e3}
+  .ind-card a{display:inline-flex;align-items:center;gap:6px;color:#fff;font-weight:600;font-size:.9rem;border-bottom:1px solid rgba(255,255,255,.4);padding-bottom:2px}
+
+  .price{background:var(--ink);color:#fff}
+  .price .h2,.price .sub,.price .kicker{color:#fff}
+  .price .sub{color:#c9c2e8}
+  .ptable{margin-top:40px;display:grid;gap:16px}
+  @media(min-width:860px){ .ptable{grid-template-columns:repeat(4,1fr)} }
+  .ptier{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:18px;padding:26px 22px}
+  .ptier.hi{background:linear-gradient(170deg,#5b3df0,#4529d6);border-color:transparent}
+  .ptier .pname{font-weight:600;color:#e3defc;font-size:.92rem;margin-bottom:10px}
+  .ptier .pamt{font-family:'Sora';font-weight:700;font-size:1.8rem}
+  .ptier .pamt small{font-family:'Inter';font-weight:500;font-size:.78rem;color:#c9c2e8}
+  .ptier ul{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:9px}
+  .ptier li{font-size:.86rem;color:#d9d5f3;display:flex;gap:8px}
+  .ptier li:before{content:'✓';color:var(--amber);font-weight:700}
+
+  .cta-band{background:linear-gradient(160deg,#5b3df0,#2a1750);color:#fff;border-radius:28px;padding:50px 32px;text-align:center;margin:0 22px}
+  .cta-band h2{font-size:clamp(1.6rem,4vw,2.2rem);max-width:26ch;margin:0 auto 14px}
+  .cta-band p{color:#d9d5f3;max-width:42ch;margin:0 auto 26px}
+  .cta-band .cta{display:flex;justify-content:center;flex-wrap:wrap;gap:12px}
+
+  footer{padding:40px 0 48px;color:var(--mut);font-size:.86rem}
+  footer .wrap{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="brand"><b>BookLine</b><span>Booking / Appointments</span></div>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#industries">Industries</a>
+      <a href="#pricing">Pricing</a>
+    </div>
+    <a class="btn btn-amber" href="#contact" style="padding:10px 18px">Get started</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <span class="pill"><span class="dot-ok"></span>Built for Bookings and Appointments</span>
+      <h1 style="margin-top:18px">Appointments that <em>run themselves.</em></h1>
+      <p class="lead">BookLine gives your business its own booking page and owner dashboard — customers book online, you send one-tap WhatsApp reminders, and no-shows drop. Set up in a day, not a month.</p>
+      <div class="cta">
+        <a class="btn btn-amber" href="#contact">Get BookLine for your business</a>
+        <a class="btn btn-ghost" href="#industries">See a live demo</a>
+      </div>
+      <div class="trust">
+        <span class="pill">No app to install</span>
+        <span class="pill">Works on any phone</span>
+        <span class="pill">Your data, your dashboard only</span>
+      </div>
+    </div>
+    <div class="mock">
+      <div class="phone">
+        <div class="screen">
+          <div class="tag">OWNER DASHBOARD</div>
+          <div class="title">Today</div>
+          <div class="row"><b>Priya Reddy</b><span>11:00 AM</span></div>
+          <div class="row"><b>Kiran Kumar</b><span>1:30 PM</span></div>
+          <div class="row"><b>Ananya Rao</b><span>3:00 PM</span></div>
+          <span class="chip">12 reminded · 0 no-shows</span>
+        </div>
+      </div>
+      <div class="float f1"><span class="dot-ok"></span>Booking confirmed</div>
+      <div class="float f2">⟳ WhatsApp reminder sent</div>
+    </div>
+  </div>
+</header>
+
+<section id="problem">
+  <div class="wrap">
+    <div class="kicker">The problem</div>
+    <h2 class="h2">Missed appointments are quietly costing you money</h2>
+    <p class="sub">Phone-call bookings get forgotten. Manual reminders eat up your time. And every missed slot is revenue that doesn't come back.</p>
+    <div class="grid3">
+      <div class="card">
+        <div class="n">!</div>
+        <h3>No-shows</h3>
+        <p>Customers forget, and you find out only when the chair sits empty.</p>
+      </div>
+      <div class="card">
+        <div class="n">⏱</div>
+        <h3>Manual reminders</h3>
+        <p>Calling or texting every customer by hand doesn't scale past a few bookings a day.</p>
+      </div>
+      <div class="card">
+        <div class="n">📋</div>
+        <h3>Scattered records</h3>
+        <p>Bookings live in a notebook or a phone's call log — nothing to review, export, or plan around.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="feat">
+  <div class="wrap">
+    <div class="kicker">What you get</div>
+    <h2 class="h2">Everything your front desk needs, nothing you don't</h2>
+    <div class="feat-grid">
+      <div class="feat-item">
+        <div class="n">🔗</div>
+        <div><h3>Your own booking link</h3><p>A clean page with your name, services and live availability — share it anywhere.</p></div>
+      </div>
+      <div class="feat-item">
+        <div class="n">💬</div>
+        <div><h3>One-tap WhatsApp reminders</h3><p>No paid messaging API — just a pre-written reminder ready to send from your own phone.</p></div>
+      </div>
+      <div class="feat-item">
+        <div class="n">🔒</div>
+        <div><h3>Private by design</h3><p>Only you can see your customers' bookings. Other businesses on BookLine can't, ever.</p></div>
+      </div>
+      <div class="feat-item">
+        <div class="n">📄</div>
+        <div><h3>PDF reports</h3><p>Export your appointment list anytime — handy for records or planning staff shifts.</p></div>
+      </div>
+      <div class="feat-item">
+        <div class="n">📱</div>
+        <div><h3>No app, no training</h3><p>Runs in any browser. If your staff can use WhatsApp, they can use this.</p></div>
+      </div>
+      <div class="feat-item">
+        <div class="n">🚀</div>
+        <div><h3>Live in a day</h3><p>Tell us about your business and your booking page is ready same-day.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="kicker">How it works</div>
+    <h2 class="h2">Three steps, and you're taking bookings</h2>
+    <div class="steps">
+      <div class="step"><div class="num">01</div><h3>We set you up</h3><p>Tell us your services and hours — we build your booking link and dashboard login.</p></div>
+      <div class="step"><div class="num">02</div><h3>Share your link</h3><p>Put it on your Instagram, Google listing, or send it directly on WhatsApp.</p></div>
+      <div class="step"><div class="num">03</div><h3>Customers book, you remind</h3><p>Bookings land in your dashboard. Tap once to send a reminder before every slot.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="industries">
+  <div class="wrap">
+    <div class="kicker">Built for your business</div>
+    <h2 class="h2">One platform, made for how different businesses actually run</h2>
+    <div class="industries">
+      <div class="ind-card">
+        <div class="tag">Salons &amp; spas</div>
+        <h3>Haircuts, color, facials — booked without a single phone call.</h3>
+        <p>Service-based booking with pricing shown upfront, so customers know what they're getting before they arrive.</p>
+        <a href="https://sreenathsjk.github.io/Bookline/book.html?salon=test-salon" target="_blank" rel="noopener">View salon demo →</a>
+      </div>
+      <div class="ind-card alt">
+        <div class="tag">Clinics &amp; hospitals</div>
+        <h3>Consultations and checkups, organized by department.</h3>
+        <p>Patients pick a department and a slot; you see every booking in one calm, clear dashboard.</p>
+        <a href="https://sreenathsjk.github.io/Bookline/hospital-book.html?salon=city-clinic" target="_blank" rel="noopener">View clinic demo →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" class="price">
+  <div class="wrap">
+    <div class="kicker">Pricing</div>
+    <h2 class="h2">Simple pricing, no setup contracts</h2>
+    <p class="sub">Pick what fits — upgrade or cancel anytime.</p>
+    <div class="ptable">
+      <div class="ptier">
+        <div class="pname">Setup only</div>
+        <div class="pamt">₹1,500 <small>one-time</small></div>
+        <ul><li>Booking link + dashboard</li><li>No ongoing support</li><li>You send your own reminders</li></ul>
+      </div>
+      <div class="ptier hi">
+        <div class="pname">Starter</div>
+        <div class="pamt">₹999 <small>/ month</small></div>
+        <ul><li>Everything in Setup</li><li>Daily reminders sent for you</li><li>Email support</li></ul>
+      </div>
+      <div class="ptier">
+        <div class="pname">Growth</div>
+        <div class="pamt">₹1,999 <small>/ month</small></div>
+        <ul><li>Everything in Starter</li><li>Weekly PDF reports</li><li>Priority WhatsApp support</li></ul>
+      </div>
+      <div class="ptier">
+        <div class="pname">Annual</div>
+        <div class="pamt">2 months <small>free</small></div>
+        <ul><li>On any monthly plan</li><li>Pay once, save more</li><li>Locked-in pricing</li></ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="cta-band">
+    <h2>Stop losing appointments to no-shows.</h2>
+    <p>Tell us about your business and we'll have your booking page live within a day.</p>
+    <div class="cta">
+      <a class="btn btn-amber" href="https://wa.me/919491218950?text=Hi%2C%20I%27d%20like%20to%20get%20BookLine%20for%20my%20business" target="_blank" rel="noopener">Message us on WhatsApp</a>
+      <a class="btn btn-ghost" style="color:var(--ink);border-color:var(--line)" href="#pricing">See pricing again</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="brand" style="color:var(--ink)"><b>BookLine</b><span style="color:var(--mut)">Booking / Appointments</span></div>
+    <div>© <span id="yr"></span> BookLine. Built in Anantapur, India.</div>
+  </div>
+</footer>
+
+<script>document.getElementById('yr').textContent = new Date().getFullYear();</script>
+</body>
+</html>
